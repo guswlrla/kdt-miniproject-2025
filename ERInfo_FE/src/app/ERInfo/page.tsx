@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 
 export default function ERInfoPage() {
-  const [navOpen, setNavOpen] = useState(true);
+  const [navOpen, setNavOpen] = useState(false);
   return (
     <div>
       <header className="fixed top-0 z-50 h-14 w-full bg-white xl:ml-55 md:ml-15 border-b border-gray-200">
@@ -40,23 +40,22 @@ export default function ERInfoPage() {
         </div>
       </header>
 
-      {/* w-0 ㅇㅈㄹ */}
-      <aside className="fixed top-0 left-0 z-40 xl:w-55 md:w-15 sm:w-0 h-full bg-white border-r border-gray-200">
+      <aside className="w-0 fixed top-0 left-0 z-40 xl:w-55 md:w-15 h-full bg-white border-r border-gray-200 transition-[width] duration-300">
         <div className="h-full px-2 py-3 overflow-y-auto">
           <ul className="space-y-2 font-medium">
-            <li className='flex justify-end'>
-              <button className='p-2 hover:bg-gray-200 rounded-lg' onClick={()=>setNavOpen(false)}>
+            <li className='flex xl:justify-end md:justify-start'>
+              <button className='p-2 hover:bg-gray-200 rounded-lg' onClick={()=>setNavOpen(true)}>
                 <img src="../sidebar-left.svg" className='w-6 h-6'/>
               </button>
             </li>
             <li>
-              <a href="#" className="flex items-center px-2.5 py-1.5 hover:bg-gray-200 rounded-lg">
-                <img src="../document.svg" className='w-5 h-5' />
-                <span className="flex-1 ms-3 whitespace-nowrap md:hidden xl:inline-flex">프로젝트 소개</span>
+              <a href="#" className="xl:w-full md:w-10 md:h-10 flex items-center px-2.5 py-1.5 hover:bg-gray-200 rounded-lg">
+                  <img src="../document.svg" className='w-5 h-5' />
+                  <span className="flex-1 ms-3 whitespace-nowrap md:hidden xl:inline-flex">프로젝트 소개</span>  
               </a>
             </li>
             <li>
-              <a href="#" className="flex items-center px-2.5 py-1.5 hover:bg-gray-200 rounded-lg">
+              <a href="#" className="xl:w-full md:w-10 md:h-10 flex items-center px-2.5 py-1.5 hover:bg-gray-200 rounded-lg">
                 <img src="../location.svg" className='w-5 h-5' />
                 <span className="flex-1 ms-3 whitespace-nowrap md:hidden xl:inline-flex">응급실 위치</span>
               </a>
@@ -64,30 +63,6 @@ export default function ERInfoPage() {
           </ul>
         </div>
       </aside>
-
-      {/* {navOpen &&
-        <aside className="fixed top-0 left-0 z-40 w-15 h-full bg-white border-r border-gray-200">
-          <div className="h-full px-2 py-3 overflow-y-auto">
-            <ul className="space-y-2">
-              <li>
-                <button className='p-2 hover:bg-gray-200 rounded-lg' onClick={()=>setNavOpen(true)}>
-                  <img src="../sidebar-left_open.svg" className='w-6 h-6'/>
-                </button>
-              </li>
-              <li>
-                <a href="#" className="flex items-center px-2.5 py-1.5 hover:bg-gray-200 rounded-lg">
-                  <img src="../document.svg" className='w-5 h-5' />
-                </a>
-              </li>
-              <li>
-                <a href="#" className="flex items-center px-2.5 py-1.5 hover:bg-gray-200 rounded-lg">
-                  <img src="../location.svg" className='w-6 h-6' />
-                </a>
-              </li>
-            </ul>
-          </div>
-        </aside>
-      } */}
 
       <div className="flex justify-center items-center p-4 xl:ml-55 md:ml-15 mt-14 bg-gray-100 min-h-screen">
         <div className='bg-white rounded-xl p-3 border border-gray-200 shadow-sm'>
