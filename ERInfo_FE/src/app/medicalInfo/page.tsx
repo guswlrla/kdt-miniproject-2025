@@ -1,15 +1,39 @@
 'use client'
-import React, { useState } from 'react';
+import dynamic from 'next/dynamic';
+import React, { useEffect, useState } from 'react';
+import KakaoMap from '../kakaoMap';
 
 export default function ERInfoPage() {
-  const [navOpen, setNavOpen] = useState(false);
+  // const [autoSidebar, setAutoSidebar] = useState(false); // 화면 기준
+  // const [userSidebar, setUserSidebar] = useState(null); // 사용자 조작
+
+  // useEffect(() => {
+  //   const mediaQuery = window.matchMedia('(min-width: 1280px)');
+
+  //   const handleResize = (e) => {
+  //     if(e.matches) {
+  //       setAutoSidebar(true);
+  //     } else {
+  //       setAutoSidebar(false);
+  //     }
+  //   };
+
+  //   handleResize(mediaQuery);
+  //   mediaQuery.addEventListener('change', handleResize);
+
+  //   return () => mediaQuery.removeEventListener('change', handleResize);
+  // }, []);
+
+  // const toggleSideBar = () => {
+  //   // setUserSidebar();
+  // }
   return (
     <div>
       <header className="fixed top-0 z-50 h-14 w-full bg-white xl:ml-55 md:ml-15 border-b border-gray-200">
         <div className="px-3 py-3 lg:px-5 lg:pl-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center justify-start p-2 font-medium">
-              <span>🚑 응급실 정보 서비스</span>
+              <span>🚑 병원 정보 서비스</span>
             </div>
             {/* <div className="flex items-center">
               <div className="flex items-center ms-3">
@@ -39,12 +63,12 @@ export default function ERInfoPage() {
           </div>
         </div>
       </header>
-
+      
       <aside className="w-0 fixed top-0 left-0 z-40 xl:w-55 md:w-15 h-full bg-white border-r border-gray-200 transition-[width] duration-300">
         <div className="h-full px-2 py-3 overflow-y-auto">
           <ul className="space-y-2 font-medium">
             <li className='flex xl:justify-end md:justify-start'>
-              <button className='p-2 hover:bg-gray-200 rounded-lg' onClick={()=>setNavOpen(true)}>
+              <button className='p-2 hover:bg-gray-200 rounded-lg' onClick={()=>{}}>
                 <img src="../sidebar-left.svg" className='w-6 h-6'/>
               </button>
             </li>
@@ -57,16 +81,16 @@ export default function ERInfoPage() {
             <li>
               <a href="#" className="xl:w-full md:w-10 md:h-10 flex items-center px-2.5 py-1.5 hover:bg-gray-200 rounded-lg">
                 <img src="../location.svg" className='w-5 h-5' />
-                <span className="flex-1 ms-3 whitespace-nowrap md:hidden xl:inline-flex">응급실 위치</span>
+                <span className="flex-1 ms-3 whitespace-nowrap md:hidden xl:inline-flex">병원 위치</span>
               </a>
             </li>
           </ul>
         </div>
       </aside>
 
-      <div className="flex justify-center items-center p-4 xl:ml-55 md:ml-15 mt-14 bg-gray-100 min-h-screen">
-        <div className='bg-white rounded-xl p-3 border border-gray-200 shadow-sm'>
-          지도 넣고 아이콘들 보여서 위에 빵 뜨게
+      <div className="flex justify-center items-center xl:ml-55 md:ml-15 mt-14" style={{ height: `calc(100vh - 56px)` }}>
+        <div className='bg-gray-100 p-3 border border-gray-200 shadow-sm w-full h-full'>
+          <KakaoMap />
         </div>
       </div>
     </div>
