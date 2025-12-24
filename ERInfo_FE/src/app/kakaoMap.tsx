@@ -1,23 +1,21 @@
 'use client'
 import { useEffect, useState } from "react"
 import { Map, MapMarker, Polygon } from "react-kakao-maps-sdk"
+import sido from "./data/sido.json";
 
-type GeoJSON = {
-  features: {
-    geometry: {
-      type: "Polygon" | "MultiPolygon"
-      coordinates: any
-    }
-  }[]
-}
+type GeoItem = {
+  name: string;
+  path: { lat: number; lng: number }[][];
+  isHover: boolean;
+  key: string;
+};
 
 export default function BasicMap() {
   const bounds = {
     sw: { lat: 33.0, lng: 124.0 },
     ne: { lat: 39.0, lng: 132.0 }
   };
-  const [paths, setPaths] = useState<{ lat: number; lng: number }[][]>([]);
-  const [isMouseOver, setIsMouseOver] = useState(false); 
+  const [geoList, setGeoList] = useState<GeoItem[]>([]);
 
   function isOutOf(lat: number, lng: number) {
     return (
@@ -29,39 +27,52 @@ export default function BasicMap() {
   }
 
   useEffect(() => {
-    async function loadGeo() {
-      const res = await fetch("/sido.json")
-      const data: GeoJSON = await res.json()
+    const { features } = sido as {
+      features: {
+        geometry: {
+          type: "Polygon" | "MultiPolygon";
+          coordinates: any;
+        },
+        properties: {
+          CTPRVN_CD: string;
+          CTP_KOR_NM: string;
+        },
+      }[];
+    };
 
-      const converted: { lat: number; lng: number }[][] = []
+    const data: GeoItem[] = []; // 변환된 시도 데이터 저장용 배열
 
-      data.features.forEach(feature => {
-        const { type, coordinates } = feature.geometry
+    for (const item of features) { // 시도별 순회
+      const { geometry, properties } = item;
+      const pathList: { lat: number; lng: number }[][] = []; // 해당 시도의 모든 폴리곤 경로
 
-        if (type === "Polygon") {
-          coordinates.forEach((ring: number[][]) => {
-            converted.push(
-              ring.map(([lng, lat]) => ({ lat, lng }))
-            )
-          })
+      if(geometry.type === "Polygon") {
+        for(const ring of geometry.coordinates) {
+          // GeoJSON: [lng, lat], KakaoMap: { lat, lng }
+          const path = ring.map(([lng, lat]: number[]) => ({lat, lng}));
+          pathList.push(path);
         }
+      }
 
-        if (type === "MultiPolygon") {
-          coordinates.forEach((polygon: number[][][]) => {
-            polygon.forEach(ring => {
-              converted.push(
-                ring.map(([lng, lat]) => ({ lat, lng }))
-              )
-            })
-          })
+      if(geometry.type === "MultiPolygon") {
+        for(const polygon of geometry.coordinates) {
+          for(const ring of polygon) {
+            const path = ring.map(([lng, lat]: number[]) => ({lat, lng}));
+            pathList.push(path);
+          }
         }
-      })
+      }
 
-      setPaths(converted)
+      // 시도 데이터 하나 완성
+      data.push({
+        name: properties.CTP_KOR_NM,
+        path: pathList,
+        isHover: false,
+        key: properties.CTPRVN_CD,
+      });
     }
-
-    loadGeo()
-  }, [])
+    setGeoList(data);
+  }, []);
 
   return (
     <Map center={{ lat: 36.5, lng: 127.5 }} level={12} minLevel={13} style={{ width: "100%", height: "100%" }}
@@ -74,9 +85,27 @@ export default function BasicMap() {
              map.setCenter(new kakao.maps.LatLng(35.1796, 129.0756))
          }}}
          className="rounded-xl shadow-md border border-gray-200">
-      {paths.map((path, idx) => (
-      <Polygon key={idx} path={path} strokeWeight={2} strokeColor="#004c80" strokeOpacity={0.8} fillColor={isMouseOver ? "#A2FF99" : "#F2FF99"} fillOpacity={0.6} onMouseover={()=>setIsMouseOver(true)} onMouseout={()=>setIsMouseOver(false)} />
-      ))}
+      {geoList.map(item => {
+          const { key, path, isHover } = item;
+          return (
+            <Polygon key={key} path={path} strokeWeight={2} strokeColor="#2c3e50" fillColor={isHover ? "#7f8c8d" : "#ffffff"} fillOpacity={0.4} 
+                     onMouseover={() => {
+                       setGeoList(pre => pre.map(area => {
+                         if (area.key === key)
+                           return {...area, isHover: true};
+                         return area;
+                       }));
+                     }}
+                     onMouseout={() => {
+                       setGeoList(pre => pre.map(area => {
+                         if (area.key === key)
+                           return {...area, isHover: false};
+                         return area;
+                       }));
+                     }}
+            />
+          );
+      })}
       <MapMarker position={{ lat: 35.1796, lng: 129.0756 }}>
         <div style={{ color: "#000" }}>현지현지</div>
       </MapMarker>
