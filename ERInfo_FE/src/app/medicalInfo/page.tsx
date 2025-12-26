@@ -88,10 +88,17 @@ export default function ERInfoPage() {
         </div>
       </aside>
 
-      <div className="flex justify-center items-center xl:ml-55 md:ml-15 mt-14" style={{ height: `calc(100vh - 56px)` }}>
-        <div className='bg-gray-100 p-3 border border-gray-200 shadow-sm w-full h-full'>
+      <div className="grid grid-rows-2 grid-cols-[2fr_1fr_1fr] gap-4 xl:ml-55 md:ml-15 mt-14 bg-gray-200 p-5" style={{ height: `calc(100vh - 56px)` }}>
+        {/* <div className='bg-gray-100 p-3 border border-gray-200 shadow-sm w-full h-full'>
+          <KakaoMap />
+        </div> */}
+        <div className='row-span-2 border border-gray-300 shadow-sm bg-white rounded-xl'>
           <KakaoMap />
         </div>
+        <div className='border border-gray-300 shadow-sm bg-white rounded-xl'></div>
+        <div className='border border-gray-300 shadow-sm bg-white rounded-xl'></div>
+        <div className='border border-gray-300 shadow-sm bg-white rounded-xl'></div>
+        <div className='border border-gray-300 shadow-sm bg-white rounded-xl'></div>
       </div>
     </div>
   );
