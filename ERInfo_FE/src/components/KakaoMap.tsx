@@ -1,8 +1,8 @@
 'use client'
 import { useEffect, useRef, useState } from "react"
 import { CustomOverlayMap, Map, MapMarker, Polygon } from "react-kakao-maps-sdk"
-import sido from "./data/sido.json";
-import sigungu from "./data/sigungu.json";
+import sido from "../app/data/sido.json";
+import sigungu from "../app/data/sigungu.json";
 
 type GeoItem = {
   name: string;
@@ -155,11 +155,11 @@ export default function KakaoMap() {
   return (
     <Map center={{ lat: 36.5, lng: 127.5 }} level={13} minLevel={13} style={{ width: "100%", height: "100%" }}
          onDragEnd={handleDragEnd} ref={mapRef} onZoomChanged={handleZoom}
-         className="rounded-xl shadow-md border border-gray-200">
-      {geoList.map(item => 
+         className="border border-gray-200 rounded-md">
+      {/* {geoList.map(item => 
         <Polygon key={item.key} path={item.path} strokeWeight={2} strokeColor="#2c3e50" fillColor={item.isHover ? "#7f8c8d" : "#ffffff"} fillOpacity={0.4} 
                  onMouseover={() => handleHover(item, true)} onMouseout={() => handleHover(item, false)}
-                 onClick={(_, e) => {!detailMode ? handleSidoClick(e.latLng, item) : handleSigunguClick(e.latLng, item)}}/>)}
+                 onClick={(_, e) => {!detailMode ? handleSidoClick(e.latLng, item) : handleSigunguClick(e.latLng, item)}}/>)} */}
     </Map>
   )
 }

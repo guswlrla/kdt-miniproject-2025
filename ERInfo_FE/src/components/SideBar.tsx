@@ -45,7 +45,13 @@ export default function SideBar() {
             <li>
               <Link href="#" className="w-full flex items-center px-2.5 py-1.5 hover:bg-gray-200 rounded-lg">
                 <img src="../location.svg" className='w-5 h-5'/>
-                <span className="flex-1 ms-3 whitespace-nowrap inline-flex">병원 위치</span>
+                <span className="flex-1 ms-3 whitespace-nowrap inline-flex">대시보드</span>
+              </Link>
+            </li>
+            <li>
+              <Link href="#" className="w-full flex items-center px-2.5 py-1.5 hover:bg-gray-200 rounded-lg">
+                <img src="../location.svg" className='w-5 h-5'/>
+                <span className="flex-1 ms-3 whitespace-nowrap inline-flex">병원 상세정보</span>
               </Link>
             </li>
           </ul>
