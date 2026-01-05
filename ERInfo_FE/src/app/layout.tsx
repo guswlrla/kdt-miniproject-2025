@@ -26,7 +26,7 @@ export default function RootLayout({
   return (
     <html lang="ko">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <Script src="//dapi.kakao.com/v2/maps/sdk.js?appkey=63a8f0bcdb302fee441d3905192eb69d&libraries=services,clusterer&autoload=false" strategy="beforeInteractive" />
+        <Script src={`//dapi.kakao.com/v2/maps/sdk.js?appkey=${process.env.NEXT_PUBLIC_KAKAO_API}&libraries=services,clusterer&autoload=false`} strategy="beforeInteractive" />
         {children}
       </body>
     </html>

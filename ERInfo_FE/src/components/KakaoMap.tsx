@@ -24,6 +24,8 @@ export default function KakaoMap() {
 
   // 드래그로 지도 경계를 벗어나면 위치 원상복구
   function handleDragEnd() {
+    if (!mapRef.current) return;
+    
     const center = mapRef.current!.getCenter()
     const lat = center!.getLat()
     const lng = center!.getLng()
@@ -79,6 +81,8 @@ export default function KakaoMap() {
 
   // 줌에 따라 시도와 시군구 폴리곤을 보이게 하기 위한 함수
   function handleZoom() {
+    if (!mapRef.current) return;
+
     const level = mapRef.current!.getLevel(); // 현재 지도의 줌 레벨
     console.log(level);
 
@@ -143,6 +147,8 @@ export default function KakaoMap() {
 
   // 마우스를 올리고 내렸을 때, 색상 변경하기 위한 함수
   function handleHover(item:GeoItem, isHover: boolean, latlng?:kakao.maps.LatLng) {
+    if (!mapRef.current) return;
+
     const level = mapRef.current!.getLevel(); // 현재 지도의 줌 레벨을 갖고 옴
     if(level! <= 8) isHover = false;
     
