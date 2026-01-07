@@ -2,34 +2,23 @@
 import { ApexOptions } from "apexcharts";
 import ReactApexChart from "react-apexcharts";
 
-interface DoubleBarChartProp {
-  height: 300 | 350 | 400;
-  colors: string[];
-  annotations?: any;
-  categories?: any;
-  valueFormat?: 'default' | 'toFixed';
-  series: { name: string; data: number[] }[];
+interface DashboardProps {
+  title?: string,
+  series: number[] | { name: string; data: number[] }[],
+  labels?: string[],
+  type: 'donut' | 'pie' | 'bar' | 'line';
 }
 
-export default function Dashboard() {
-  const series = [
-    {
-      name: "Series 1",
-      data: [10, 20, 30, 40],
-    }
-  ];
-
+export default function Dashboard({title, series, labels, type}: DashboardProps) {
+  const formattedSeries = (type === 'donut' || type === 'pie') ? series as number[] : series as [{name: string, data: number[]}];
   const options: ApexOptions = {
-    chart: {
-      type: 'bar',
-    },
-    xaxis: {
-      categories: ['A', 'B', 'C', 'D'],
-    },
-  };
+    labels: labels,
+    xaxis: {categories: labels}
+  }
   return (
     <div className="bg-white p-5 border border-gray-200 rounded-2xl shadow-sm h-full">
-       <ReactApexChart options={options} series={series} type="bar" height={350} />
+       <ReactApexChart options={options} series={formattedSeries} type={type} height={350} />
+       <h3 className="text-sm text-center font-medium">{title}</h3>
     </div>
   );
 }

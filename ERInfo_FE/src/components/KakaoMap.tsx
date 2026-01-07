@@ -11,7 +11,7 @@ type GeoItem = {
   key: string;
 };
 
-export default function KakaoMap() {
+export default function KakaoMap({selectedSido, selectedSgg}: {selectedSido: string, selectedSgg: string}) {
   const bounds = { // 지도 경계를 벗어나면 돌아가도록 경계 잡기
     sw: { lat: 33.0, lng: 124.0 },
     ne: { lat: 39.0, lng: 132.0 }
@@ -158,8 +158,33 @@ export default function KakaoMap() {
     setGeoList(prev => prev.map(area => area.key === item.key ? { ...area, isHover } : area));
   }
 
+  function handleMoveByAdress(address: string) { // 와이라노
+    if (!mapRef.current) return;
+
+    const geoCoder = new kakao.maps.services.Geocoder();
+    geoCoder.addressSearch(address, (result, status) => {
+      if(status === kakao.maps.services.Status.OK) {
+        const coords = new kakao.maps.LatLng(parseFloat(result[0].y), parseFloat(result[0].x))
+        console.log(coords)
+
+        const level = selectedSgg ? 8 : 10;
+        
+        mapRef.current?.setLevel(level);
+        mapRef.current?.panTo(coords);
+      }
+    })
+  }
+
+  useEffect(()=> {
+    if(selectedSido) {
+      handleMoveByAdress(selectedSido)
+    } else if(selectedSgg) {
+      handleMoveByAdress(`${selectedSido} ${selectedSgg}`)
+    }
+  }, [selectedSido, selectedSgg])
+
   return (
-    <Map center={{ lat: 36.5, lng: 127.5 }} level={13} minLevel={13} style={{ width: "100%", height: "100%" }}
+    <Map center={{ lat: 36.5, lng: 127.5 }} level={12} minLevel={13} style={{ width: "100%", height: "100%" }}
          onDragEnd={handleDragEnd} ref={mapRef} onZoomChanged={handleZoom}
          className="border border-gray-200 rounded-md">
       {/* {geoList.map(item => 
