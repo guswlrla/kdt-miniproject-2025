@@ -8,7 +8,7 @@ interface SideBarProps {
 
 export default function SideBar({collapsed, setCollapsed}: SideBarProps) {
   return (
-    <aside className={`${collapsed ? 'md:w-16' : 'md:w-55'} fixed w-0 top-0 left-0 z-40 h-screen bg-white border-r border-gray-200 transition-all duration-300`}>
+    <aside className={`${collapsed ? 'md:w-16' : 'md:w-55'} fixed w-0 top-0 left-0 z-40 h-screen bg-white border-r border-gray-200 transition-all duration-300 overflow-hidden`}>
       <div className='h-full flex flex-col'>
         <div className={`${collapsed ? 'justify-center' : 'justify-end'} flex m-2`}>
           <button className='p-2 hover:bg-gray-200 rounded-lg' onClick={() => {setCollapsed(!collapsed)}}>

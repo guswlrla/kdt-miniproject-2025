@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react"
 import { CustomOverlayMap, Map, MapMarker, Polygon } from "react-kakao-maps-sdk"
 import sido from "../app/data/sido.json";
 import sigungu from "../app/data/sigungu.json";
-import { features } from "process";
+import { HospLocation } from "@/types/HospLocation";
 
 type GeoItem = {
   name: string;
@@ -11,7 +11,14 @@ type GeoItem = {
   key: string;
 };
 
-export default function KakaoMap({selectedSido, selectedSgg}: {selectedSido: string, selectedSgg: string}) {
+interface KakaoMapProps {
+  selectedSido: string;
+  selectedSgg: string;
+  markers: HospLocation[];
+  onBoundsChange: (swLat: number, neLat: number, swLng: number, neLng: number) => void
+}
+
+export default function KakaoMap({selectedSido, selectedSgg, markers, onBoundsChange}: KakaoMapProps) {
   const bounds = { // 지도 경계를 벗어나면 돌아가도록 경계 잡기
     sw: { lat: 33.0, lng: 124.0 },
     ne: { lat: 39.0, lng: 132.0 }
@@ -47,7 +54,8 @@ export default function KakaoMap({selectedSido, selectedSgg}: {selectedSido: str
 
       if(geometry.type === "Polygon") {
         for(const ring of geometry.coordinates) {
-          // GeoJSON: [lng, lat], KakaoMap: { lat, lng }
+          // GeoJSON: [lng, lat]
+          // KakaoMap: { lat, lng }으로 받아야 함
           const path = ring.map(([lng, lat]: number[]) => ({lat, lng}));
           pathList.push(path);
         }
@@ -101,16 +109,14 @@ export default function KakaoMap({selectedSido, selectedSgg}: {selectedSido: str
     // }
   }
 
-  function handleMoveByAdress(address: string) { // 외않되
-    if (!mapRef.current) return;
+  function handleMoveByAddr(address: string) {
+    if (!mapRef.current) return; // 지도가 없으면 리턴
 
-    const geoCoder = new kakao.maps.services.Geocoder();
-    geoCoder.addressSearch(address, (result, status) => {
-      if(status === kakao.maps.services.Status.OK) {
-        const coords = new kakao.maps.LatLng(parseFloat(result[0].y), parseFloat(result[0].x))
-        console.log(coords)
-
-        const level = selectedSgg ? 8 : 10;
+    const geoCoder = new kakao.maps.services.Geocoder(); // 카카오맵 주소-좌표 변환 객체 생성
+    geoCoder.addressSearch(address, (result, status) => { // 전달받은 주소를 바탕으로 좌표 검색
+      if(status === kakao.maps.services.Status.OK) { // 검색 결과가 정상적으로 들어오면
+        const coords = new kakao.maps.LatLng(parseFloat(result[0].y), parseFloat(result[0].x)) // 검색결과 첫번째 항목의 위도, 경도를 추출해 좌표 객체 생성 
+        const level = selectedSgg ? 8 : 10; // 시군구가 선택되면, 가깝게 시도가 선택되면 멀게
         
         mapRef.current?.setLevel(level);
         mapRef.current?.panTo(coords);
@@ -118,9 +124,22 @@ export default function KakaoMap({selectedSido, selectedSgg}: {selectedSido: str
     })
   }
 
+  // 움직임이 멈췄을 때, 화면 영역 위도, 경도 값 구하기
+  function handleIdle() {
+    if (!mapRef.current) return;
+    const currentLevel = mapRef.current.getLevel();
+
+    if (currentLevel <= 9) { // 줌 레벨이 9이상일 때부터 드래그마다 호출
+      const bounds = mapRef.current.getBounds();
+      const sw = bounds.getSouthWest();
+      const ne = bounds.getNorthEast();
+      onBoundsChange(sw.getLat(), ne.getLat(), sw.getLng(), ne.getLng());
+    }
+  }
+
   useEffect(()=> {
     if(selectedSido && selectedSgg) {
-      handleMoveByAdress(`${selectedSido} ${selectedSgg}`)
+      handleMoveByAddr(`${selectedSido} ${selectedSgg}`)
 
       const targetSido = sido.features.find(feature => feature.properties.SIG_KOR_NM === selectedSido);
       const sidoCode = targetSido?.properties.CTPRVN_CD || "";
@@ -130,7 +149,8 @@ export default function KakaoMap({selectedSido, selectedSgg}: {selectedSido: str
       };
       handlePolygon(filteredSigungu);
     } else if(selectedSido) {
-      handleMoveByAdress(selectedSido);
+      const refineSido = selectedSido === "광주" ? "광주광역시" : selectedSido; // 광주광역시와 경기도 광주시 구분
+      handleMoveByAddr(refineSido);
 
       const filteredSido = { // 시도 데이터에서 선택된 시도만 필터링
         ...sido,
@@ -141,11 +161,11 @@ export default function KakaoMap({selectedSido, selectedSgg}: {selectedSido: str
   }, [selectedSido, selectedSgg])
 
   return (
-    <Map center={{ lat: 36.5, lng: 127.5 }} level={12} minLevel={13} style={{ width: "100%", height: "100%" }}
-         onDragEnd={handleDragEnd} ref={mapRef} onZoomChanged={handleZoom}
+    <Map center={{ lat: 36.5, lng: 127.5 }} level={13} minLevel={13} style={{ width: "100%", height: "100%" }}
+         onDragEnd={handleDragEnd} ref={mapRef} onZoomChanged={handleZoom} onIdle={handleIdle}
          className="border border-gray-200 rounded-md">
-      {geoList.map(item => 
-        <Polygon key={item.key} path={item.path} strokeWeight={2} strokeColor="#2c3e50" fillColor="#ffffff" fillOpacity={0.4} />)}
+      {geoList.map(item => <Polygon key={item.key} path={item.path} strokeWeight={2} strokeColor="#2c3e50" fillColor="#4e78a8" fillOpacity={0.4} />)}
+      {markers.map(item => <MapMarker key={item.hospitalId} position={{lat: item.latitude, lng: item.longitude }} title={item.institutionName} /> )}
     </Map>
   )
 }
