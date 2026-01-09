@@ -5,6 +5,7 @@ import SideBar from '@/components/SideBar';
 import Header from '@/components/Header';
 import ScoreCard from '@/components/ScoreCard';
 import SelectBox from '@/components/SelectBox';
+import Modal from '@/components/Modal';
 import dynamic from 'next/dynamic';
 const Dashboard = dynamic(() => import('@/components/Dashboard'), { ssr: false });
 import { HospCategory } from '@/types/HospCategory';
@@ -19,6 +20,9 @@ export default function medicalInfoPage() {
   const [nightHosp, setNightHosp] = useState<number>(0); // 야간진료 운영 병원 수
   const [holidayHosp, setHolidayHosp] = useState<number>(0); // 공휴일 운영 병원 수
   const [coreHosp, setCoreHosp] = useState<number>(0); // 필수의료 운영 병원 수
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false); // 모달 창
+  const [modalData, setModalData] = useState([]); // 모달 창 데이터
+  const [modalTitle, setModalTitle] = useState('');
 
   // 지도 관련 변수
   const [sidoList, setSidoList] = useState<string[]>([]); // 시도 목록
@@ -26,11 +30,12 @@ export default function medicalInfoPage() {
   const [selectedSido, setSelectedSido] = useState<string>(''); // 선택된 시도
   const [selectedSgg, setSelectedSgg] = useState<string>(''); // 선택된 시군구
 
-  const [markers, setMarkers] = useState<HospLocation[]>([]); // 병원 마커
-  const filteredMarkers = selectedSido && selectedSgg ? markers.filter(m =>
-                          selectedSido.includes(m.sidoName) && m.sigunguName === selectedSgg ) : selectedSido ? markers.filter(m =>
-                          selectedSido.includes(m.sidoName)) : markers;
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const [markers, setMarkers] = useState<HospLocation[]>([]); // 전체 병원 마커 보관
+  const [displayMarker, setDisplayMarker] = useState<HospLocation[]>([]); // 줌 화면에 따라 보이는 마커
+  // 선택한 시도와 시군구가 있으면 해당 마커 필터링
+  const filteredMarkers = selectedSido && selectedSgg ? displayMarker.filter(m =>
+                          selectedSido.includes(m.sidoName) && m.sigunguName === selectedSgg ) : selectedSido ? displayMarker.filter(m =>
+                          selectedSido.includes(m.sidoName)) : displayMarker;
 
   // 차트 관련 변수
   const [hospCate, setHospCate] = useState<HospCategory[]>([]); // 병원 유형
@@ -81,6 +86,7 @@ export default function medicalInfoPage() {
       }
       const data = await resp.json();
       setNightHosp(data.totalElements);
+      setModalData(data.content);
     } catch(error) {
       console.error(error);
     }
@@ -102,6 +108,7 @@ export default function medicalInfoPage() {
       }
       const data = await resp.json();
       setHolidayHosp(data.totalElements);
+      setModalData(data.content);
     } catch(error) {
       console.error(error);
     }
@@ -121,8 +128,9 @@ export default function medicalInfoPage() {
       if(!resp.ok) {
         throw new Error("필수의료 운영 병원 정보를 불러오는데 실패했습니다!");
       }
-      const { totalElements } = await resp.json();
-      setCoreHosp(totalElements);
+      const data = await resp.json();
+      setCoreHosp(data.totalElements);
+      setModalData(data.content);
     } catch(error) {
       console.error(error);
     }
@@ -199,25 +207,21 @@ export default function medicalInfoPage() {
   }
 
   // 병원 위치정보 불러오기(마커)
-  const fetchHospLocation = async(swLat?: number, neLat?:number, swLng?:number, neLng?:number) => {
-    let url = 'http://10.125.121.178:8080/api/medicalLocation';
-    if(swLat && neLat && swLng && neLng) {
-      url += `?swLat=${swLat}&neLat=${neLat}&swLng=${swLng}&neLng=${neLng}`;
-    }
-
+  const fetchHospLocation = async() => {
     try{
-      const resp = await fetch(url);
+      const resp = await fetch('http://10.125.121.178:8080/api/medicalLocation');
       if(!resp.ok) {
         throw new Error("병원 위치 정보를 불러오는데 실패했습니다!");
       }
       const data = await resp.json();
       setMarkers(data);
+      setDisplayMarker(data);
     } catch(error) {
       console.error(error);
     }
   }
 
-  // 병원 간단정보 불러오기(커스텀 오버레이)
+  // 병원 간단정보 불러오기(커스텀 오버레이, 모달 창)
   const fetchHospInfo = async(sido?: string, sgg?: string) => {
     let url = 'http://10.125.121.178:8080/api/medicalInfo';
     if(sido && sgg) {
@@ -230,6 +234,7 @@ export default function medicalInfoPage() {
         throw new Error("병원 정보를 불러오는데 실패했습니다!");
       }
       const data = await resp.json();
+      setModalData(data.content);
     } catch(error) {
       console.error(error);
     }
@@ -237,7 +242,7 @@ export default function medicalInfoPage() {
 
   useEffect(() => {
     fetchSidoList(); // 시도 목록 나타내기
-    fetchHospLocation(33.0, 39.0, 124.0, 132.0); 
+    fetchHospLocation(); 
   }, []);
 
   useEffect(() => {
@@ -261,16 +266,34 @@ export default function medicalInfoPage() {
     setSggList([]); // 이전 시군구 리스트 제거
   }
 
-  // 드래그 후 일정 시간이 지나서 호출 (디바운싱)
+  // 지도가 움직일 때 호출
   const handleBoundsChange = (swLat: number, neLat: number, swLng: number, neLng: number) => {
-    if (timerRef.current) { // 이미 대기 중인 작업이 있다면 취소
-      clearTimeout(timerRef.current);
+    const filtered = markers.filter(m => m.latitude >= swLat && m.latitude <= neLat && m.longitude >= swLng && m.longitude <= neLng);
+    setDisplayMarker(filtered);
+  }
+
+  const handleModalData = async(type: string) => {
+    if(!selectedSido || !selectedSgg) {
+      alert('시도와 시군구를 먼저 선택해주세요.');
+      return;
     }
 
-    // 500ms(0.5초) 후에 API 호출
-    timerRef.current = setTimeout(() => {
-      fetchHospLocation(swLat, neLat, swLng, neLng);
-    }, 500);
+    setIsModalOpen(true);
+    setModalData([]);
+    switch (type) {
+      case 'total':
+        fetchHospInfo(selectedSido, selectedSgg);
+        break;
+      case 'night':
+        fetchNightHospCount(selectedSido, selectedSgg);
+        break;
+      case 'holiday':
+        fetchHolidayHospCount(selectedSido, selectedSgg);
+        break;
+      case 'core':
+        fetchCoreHospCount(selectedSido, selectedSgg);
+        break;
+    }
   }
 
   return (
@@ -281,11 +304,12 @@ export default function medicalInfoPage() {
           <Header />
           <div className='p-5 flex-1 min-h-0 grid grid-cols-12 grid-rows-[auto_1fr] gap-4'>
               <div className='xl:col-span-8 grid grid-cols-4 gap-4 col-span-12'>
-                <ScoreCard title="전체 병원 수" content={totalCount}/>
-                <ScoreCard title="야간진료 운영 병원" content={nightHosp}/>
-                <ScoreCard title="일요일/공휴일 진료" content={holidayHosp}/>
-                <ScoreCard title="필수의료 운영 병원" content={coreHosp}/>
+                <ScoreCard title="전체 병원 수" content={totalCount} onOpen={() => handleModalData('total')}/>
+                <ScoreCard title="야간진료 운영 병원" content={nightHosp} onOpen={() => handleModalData('night')} />
+                <ScoreCard title="일요일/공휴일 진료" content={holidayHosp} onOpen={() => handleModalData('holiday')}/>
+                <ScoreCard title="필수의료 운영 병원" content={coreHosp} onOpen={() => handleModalData('core')}/>
               </div>
+              <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} selectedSido={selectedSido} selectedSgg={selectedSgg} title="전체 병원 수" data={modalData} />
               <div className='xl:col-span-4 row-span-2 flex xl:flex-col flex-row min-h-0 gap-4 col-span-12'>
                 <div className='flex-1 min-h-75'>
                   <Dashboard title="병원 유형별 통계" series={categoryData.series} labels={categoryData.labels} type="donut" />

@@ -26,6 +26,7 @@ export default function KakaoMap({selectedSido, selectedSgg, markers, onBoundsCh
   const [geoList, setGeoList] = useState<GeoItem[]>([]); // 폴리곤 데이터
   const [detailMode, setDetailMode] = useState<Boolean>(false); // 시도, 시군구 화면 구분(시도: false, 시군구: true)
   const mapRef = useRef<kakao.maps.Map>(null);
+  const markerImg = "/marker.png";
   // const overlayRef = useRef<kakao.maps.CustomOverlay | null>(null);
 
   // 드래그로 지도 경계를 벗어나면 위치 원상복구
@@ -82,7 +83,7 @@ export default function KakaoMap({selectedSido, selectedSgg, markers, onBoundsCh
 
   // 줌에 따라 시도와 시군구 폴리곤을 보이게 하기 위한 함수
   function handleZoom() {
-    // if (!mapRef.current) return;
+    if (!mapRef.current) return;
 
     // const level = mapRef.current!.getLevel(); // 현재 지도의 줌 레벨
     // console.log(level);
@@ -127,14 +128,10 @@ export default function KakaoMap({selectedSido, selectedSgg, markers, onBoundsCh
   // 움직임이 멈췄을 때, 화면 영역 위도, 경도 값 구하기
   function handleIdle() {
     if (!mapRef.current) return;
-    const currentLevel = mapRef.current.getLevel();
-
-    if (currentLevel <= 9) { // 줌 레벨이 9이상일 때부터 드래그마다 호출
-      const bounds = mapRef.current.getBounds();
-      const sw = bounds.getSouthWest();
-      const ne = bounds.getNorthEast();
-      onBoundsChange(sw.getLat(), ne.getLat(), sw.getLng(), ne.getLng());
-    }
+    const bounds = mapRef.current.getBounds();
+    const sw = bounds.getSouthWest();
+    const ne = bounds.getNorthEast();
+    onBoundsChange(sw.getLat(), ne.getLat(), sw.getLng(), ne.getLng());
   }
 
   useEffect(()=> {
@@ -164,8 +161,9 @@ export default function KakaoMap({selectedSido, selectedSgg, markers, onBoundsCh
     <Map center={{ lat: 36.5, lng: 127.5 }} level={13} minLevel={13} style={{ width: "100%", height: "100%" }}
          onDragEnd={handleDragEnd} ref={mapRef} onZoomChanged={handleZoom} onIdle={handleIdle}
          className="border border-gray-200 rounded-md">
-      {geoList.map(item => <Polygon key={item.key} path={item.path} strokeWeight={2} strokeColor="#2c3e50" fillColor="#4e78a8" fillOpacity={0.4} />)}
-      {markers.map(item => <MapMarker key={item.hospitalId} position={{lat: item.latitude, lng: item.longitude }} title={item.institutionName} /> )}
+      {geoList.map(item => <Polygon key={item.key} path={item.path} strokeWeight={2} strokeColor="#2c3e50" strokeOpacity={1}  fillColor="none" />)}
+      {markers.map(item => <MapMarker key={item.hospitalId} position={{lat: item.latitude, lng: item.longitude }} title={item.institutionName} 
+                                      image={{src: "/redMarker.png", size: {width: 40, height: 40}}} /> )}
     </Map>
   )
 }
