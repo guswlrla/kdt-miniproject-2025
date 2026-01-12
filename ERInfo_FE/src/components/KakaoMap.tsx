@@ -15,10 +15,11 @@ interface KakaoMapProps {
   selectedSido: string;
   selectedSgg: string;
   markers: HospLocation[];
-  onBoundsChange: (swLat: number, neLat: number, swLng: number, neLng: number) => void
+  onBoundsChange: (swLat: number, neLat: number, swLng: number, neLng: number) => void;
+  onZoomChange: (level: number) => void;
 }
 
-export default function KakaoMap({selectedSido, selectedSgg, markers, onBoundsChange}: KakaoMapProps) {
+export default function KakaoMap({selectedSido, selectedSgg, markers, onBoundsChange, onZoomChange}: KakaoMapProps) {
   const bounds = { // 지도 경계를 벗어나면 돌아가도록 경계 잡기
     sw: { lat: 33.0, lng: 124.0 },
     ne: { lat: 39.0, lng: 132.0 }
@@ -26,7 +27,6 @@ export default function KakaoMap({selectedSido, selectedSgg, markers, onBoundsCh
   const [geoList, setGeoList] = useState<GeoItem[]>([]); // 폴리곤 데이터
   const [detailMode, setDetailMode] = useState<Boolean>(false); // 시도, 시군구 화면 구분(시도: false, 시군구: true)
   const mapRef = useRef<kakao.maps.Map>(null);
-  const markerImg = "/marker.png";
   // const overlayRef = useRef<kakao.maps.CustomOverlay | null>(null);
 
   // 드래그로 지도 경계를 벗어나면 위치 원상복구
@@ -85,6 +85,9 @@ export default function KakaoMap({selectedSido, selectedSgg, markers, onBoundsCh
   function handleZoom() {
     if (!mapRef.current) return;
 
+    const level = mapRef.current.getLevel();
+    onZoomChange(level);
+
     // const level = mapRef.current!.getLevel(); // 현재 지도의 줌 레벨
     // console.log(level);
 
@@ -128,9 +131,12 @@ export default function KakaoMap({selectedSido, selectedSgg, markers, onBoundsCh
   // 움직임이 멈췄을 때, 화면 영역 위도, 경도 값 구하기
   function handleIdle() {
     if (!mapRef.current) return;
+
     const bounds = mapRef.current.getBounds();
     const sw = bounds.getSouthWest();
     const ne = bounds.getNorthEast();
+
+    // const level = mapRef.current!.getLevel();
     onBoundsChange(sw.getLat(), ne.getLat(), sw.getLng(), ne.getLng());
   }
 

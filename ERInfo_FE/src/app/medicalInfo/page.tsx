@@ -22,7 +22,8 @@ export default function medicalInfoPage() {
   const [coreHosp, setCoreHosp] = useState<number>(0); // 필수의료 운영 병원 수
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false); // 모달 창
   const [modalData, setModalData] = useState([]); // 모달 창 데이터
-  const [modalTitle, setModalTitle] = useState('');
+  const [modalTitle, setModalTitle] = useState(''); // 스코어 카드별 모달 창 제목
+  const [isLoading, setIsLoading] = useState<boolean>(false); // 로딩 유무
 
   // 지도 관련 변수
   const [sidoList, setSidoList] = useState<string[]>([]); // 시도 목록
@@ -32,10 +33,6 @@ export default function medicalInfoPage() {
 
   const [markers, setMarkers] = useState<HospLocation[]>([]); // 전체 병원 마커 보관
   const [displayMarker, setDisplayMarker] = useState<HospLocation[]>([]); // 줌 화면에 따라 보이는 마커
-  // 선택한 시도와 시군구가 있으면 해당 마커 필터링
-  const filteredMarkers = selectedSido && selectedSgg ? displayMarker.filter(m =>
-                          selectedSido.includes(m.sidoName) && m.sigunguName === selectedSgg ) : selectedSido ? displayMarker.filter(m =>
-                          selectedSido.includes(m.sidoName)) : displayMarker;
 
   // 차트 관련 변수
   const [hospCate, setHospCate] = useState<HospCategory[]>([]); // 병원 유형
@@ -207,9 +204,9 @@ export default function medicalInfoPage() {
   }
 
   // 병원 위치정보 불러오기(마커)
-  const fetchHospLocation = async() => {
+  const fetchHospLocation = async(level?: number) => {
     try{
-      const resp = await fetch('http://10.125.121.178:8080/api/medicalLocation');
+      const resp = await fetch(`http://10.125.121.178:8080/api/medicalLocation?${level}`);
       if(!resp.ok) {
         throw new Error("병원 위치 정보를 불러오는데 실패했습니다!");
       }
@@ -221,11 +218,11 @@ export default function medicalInfoPage() {
     }
   }
 
-  // 병원 간단정보 불러오기(커스텀 오버레이, 모달 창)
+  // 병원 간단정보 불러오기(커스텀 오버레이, 마커, 모달 창)
   const fetchHospInfo = async(sido?: string, sgg?: string) => {
-    let url = 'http://10.125.121.178:8080/api/medicalInfo';
+    let url = 'http://10.125.121.178:8080/api/medicalInfo?size=10000';
     if(sido && sgg) {
-      url += `?sidoName=${encodeURIComponent(sido)}&sigunguName=${encodeURIComponent(sgg)}`;
+      url += `&sidoName=${encodeURIComponent(sido)}&sigunguName=${encodeURIComponent(sgg)}`;
     }
 
     try{
@@ -234,6 +231,11 @@ export default function medicalInfoPage() {
         throw new Error("병원 정보를 불러오는데 실패했습니다!");
       }
       const data = await resp.json();
+      const newMarkers: HospLocation[] = data.content.map((item: any) => ({
+        latitude: item.latitude, 
+        longitude: item.longitude,
+      }));
+      setDisplayMarker(newMarkers);
       setModalData(data.content);
     } catch(error) {
       console.error(error);
@@ -257,6 +259,7 @@ export default function medicalInfoPage() {
     fetchNightHospCount(selectedSido, selectedSgg);
     fetchHolidayHospCount(selectedSido, selectedSgg);
     fetchCoreHospCount(selectedSido, selectedSgg);
+    if(selectedSido && selectedSgg) fetchHospInfo(selectedSido, selectedSgg);
   }, [selectedSido, selectedSgg]);
 
   // 선택한 시도를 바꿨을 때 처리
@@ -268,31 +271,38 @@ export default function medicalInfoPage() {
 
   // 지도가 움직일 때 호출
   const handleBoundsChange = (swLat: number, neLat: number, swLng: number, neLng: number) => {
+    if (selectedSido) return;
+
     const filtered = markers.filter(m => m.latitude >= swLat && m.latitude <= neLat && m.longitude >= swLng && m.longitude <= neLng);
     setDisplayMarker(filtered);
   }
 
   const handleModalData = async(type: string) => {
-    if(!selectedSido || !selectedSgg) {
-      alert('시도와 시군구를 먼저 선택해주세요.');
-      return;
-    }
-
-    setIsModalOpen(true);
     setModalData([]);
-    switch (type) {
-      case 'total':
-        fetchHospInfo(selectedSido, selectedSgg);
-        break;
-      case 'night':
-        fetchNightHospCount(selectedSido, selectedSgg);
-        break;
-      case 'holiday':
-        fetchHolidayHospCount(selectedSido, selectedSgg);
-        break;
-      case 'core':
-        fetchCoreHospCount(selectedSido, selectedSgg);
-        break;
+    setIsModalOpen(true);
+    setIsLoading(true);
+
+    try {
+      switch (type) {
+        case 'total':
+          setModalTitle("전체 병원 수");
+          await fetchHospInfo(selectedSido, selectedSgg);
+          break;
+        case 'night':
+          setModalTitle("야간진료 운영 병원");
+          await fetchNightHospCount(selectedSido, selectedSgg);
+          break;
+        case 'holiday':
+          setModalTitle("일요일/공휴일 진료 병원");
+          await fetchHolidayHospCount(selectedSido, selectedSgg);
+          break;
+        case 'core':
+          setModalTitle("필수의료 운영 병원");
+          await fetchCoreHospCount(selectedSido, selectedSgg);
+          break;
+      }
+    } finally {
+      setIsLoading(false); // 성공하든 실패하든 로딩 종료
     }
   }
 
@@ -309,7 +319,7 @@ export default function medicalInfoPage() {
                 <ScoreCard title="일요일/공휴일 진료" content={holidayHosp} onOpen={() => handleModalData('holiday')}/>
                 <ScoreCard title="필수의료 운영 병원" content={coreHosp} onOpen={() => handleModalData('core')}/>
               </div>
-              <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} selectedSido={selectedSido} selectedSgg={selectedSgg} title="전체 병원 수" data={modalData} />
+              <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={modalTitle} data={modalData} isLoading={isLoading}/>
               <div className='xl:col-span-4 row-span-2 flex xl:flex-col flex-row min-h-0 gap-4 col-span-12'>
                 <div className='flex-1 min-h-75'>
                   <Dashboard title="병원 유형별 통계" series={categoryData.series} labels={categoryData.labels} type="donut" />
@@ -324,7 +334,7 @@ export default function medicalInfoPage() {
                   <SelectBox label='시군구' options={sggList} value={selectedSgg} sidoChange={setSelectedSgg}/>
                 </div>
                 <div className='flex-1 min-h-125'>
-                  <KakaoMap selectedSido={selectedSido} selectedSgg={selectedSgg} markers={filteredMarkers} onBoundsChange={handleBoundsChange} />
+                  <KakaoMap selectedSido={selectedSido} selectedSgg={selectedSgg} markers={displayMarker} onBoundsChange={handleBoundsChange} onZoomChange={fetchHospLocation} />
                 </div>
               </div>
           </div>
