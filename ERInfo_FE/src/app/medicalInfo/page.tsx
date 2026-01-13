@@ -285,19 +285,19 @@ export default function medicalInfoPage() {
     try {
       switch (type) {
         case 'total':
-          setModalTitle("전체 병원 수");
+          setModalTitle("🏥 전체 병원 수");
           await fetchHospInfo(selectedSido, selectedSgg);
           break;
         case 'night':
-          setModalTitle("야간진료 운영 병원");
+          setModalTitle("🌜 야간진료 운영 병원");
           await fetchNightHospCount(selectedSido, selectedSgg);
           break;
         case 'holiday':
-          setModalTitle("일요일/공휴일 진료 병원");
+          setModalTitle("🗓️ 일요일/공휴일 진료 병원");
           await fetchHolidayHospCount(selectedSido, selectedSgg);
           break;
         case 'core':
-          setModalTitle("필수의료 운영 병원");
+          setModalTitle("🚨 필수의료 운영 병원");
           await fetchCoreHospCount(selectedSido, selectedSgg);
           break;
       }
@@ -314,15 +314,19 @@ export default function medicalInfoPage() {
           <Header />
           <div className='p-5 flex-1 min-h-0 grid grid-cols-12 grid-rows-[auto_1fr] gap-4'>
               <div className='xl:col-span-8 grid grid-cols-4 gap-4 col-span-12'>
-                <ScoreCard title="전체 병원 수" content={totalCount} onOpen={() => handleModalData('total')}/>
-                <ScoreCard title="야간진료 운영 병원" content={nightHosp} onOpen={() => handleModalData('night')} />
-                <ScoreCard title="일요일/공휴일 진료" content={holidayHosp} onOpen={() => handleModalData('holiday')}/>
-                <ScoreCard title="필수의료 운영 병원" content={coreHosp} onOpen={() => handleModalData('core')}/>
+                <ScoreCard title="전체 병원 수" content={totalCount} onOpen={() => handleModalData('total')}
+                           color="blue" imgSrc='hospital'/>
+                <ScoreCard title="야간진료 운영 병원" content={nightHosp} onOpen={() => handleModalData('night')}
+                           color="purple" imgSrc='night' />
+                <ScoreCard title="일요일/공휴일 진료" content={holidayHosp} onOpen={() => handleModalData('holiday')}
+                           color="orange" imgSrc='holiday'/>
+                <ScoreCard title="필수의료 운영 병원" content={coreHosp} onOpen={() => handleModalData('core')}
+                           color="red" imgSrc='emergency'/>
               </div>
               <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={modalTitle} data={modalData} isLoading={isLoading}/>
               <div className='xl:col-span-4 row-span-2 flex xl:flex-col flex-row min-h-0 gap-4 col-span-12'>
                 <div className='flex-1 min-h-75'>
-                  <Dashboard title="병원 유형별 통계" series={categoryData.series} labels={categoryData.labels} type="donut" />
+                  <Dashboard title="병원 유형별 통계" series={categoryData.series} labels={categoryData.labels} type="pie" />
                 </div>
                 <div className='flex-1 min-h-75'>
                   <Dashboard title='진료 과목별 통계' series={deptData.series} labels={deptData.labels} type="bar"/>

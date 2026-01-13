@@ -4,6 +4,7 @@ import { CustomOverlayMap, Map, MapMarker, Polygon } from "react-kakao-maps-sdk"
 import sido from "../app/data/sido.json";
 import sigungu from "../app/data/sigungu.json";
 import { HospLocation } from "@/types/HospLocation";
+import OverlayCard from "./OverlayCard";
 
 type GeoItem = {
   name: string;
@@ -27,7 +28,8 @@ export default function KakaoMap({selectedSido, selectedSgg, markers, onBoundsCh
   const [geoList, setGeoList] = useState<GeoItem[]>([]); // 폴리곤 데이터
   const [detailMode, setDetailMode] = useState<Boolean>(false); // 시도, 시군구 화면 구분(시도: false, 시군구: true)
   const mapRef = useRef<kakao.maps.Map>(null);
-  // const overlayRef = useRef<kakao.maps.CustomOverlay | null>(null);
+  const [selectedMarker, setSelectedMarker] = useState<HospLocation | null>(null);
+  // const [isClose, setIsClose] = useState<boolean>(false);
 
   // 드래그로 지도 경계를 벗어나면 위치 원상복구
   function handleDragEnd() {
@@ -140,6 +142,11 @@ export default function KakaoMap({selectedSido, selectedSgg, markers, onBoundsCh
     onBoundsChange(sw.getLat(), ne.getLat(), sw.getLng(), ne.getLng());
   }
 
+  function handleOverlay(item: HospLocation) {
+    setSelectedMarker(item);
+    // setIsClose(true);
+  }
+
   useEffect(()=> {
     if(selectedSido && selectedSgg) {
       handleMoveByAddr(`${selectedSido} ${selectedSgg}`)
@@ -168,8 +175,13 @@ export default function KakaoMap({selectedSido, selectedSgg, markers, onBoundsCh
          onDragEnd={handleDragEnd} ref={mapRef} onZoomChanged={handleZoom} onIdle={handleIdle}
          className="border border-gray-200 rounded-md">
       {geoList.map(item => <Polygon key={item.key} path={item.path} strokeWeight={2} strokeColor="#2c3e50" strokeOpacity={1}  fillColor="none" />)}
-      {markers.map(item => <MapMarker key={item.hospitalId} position={{lat: item.latitude, lng: item.longitude }} title={item.institutionName} 
-                                      image={{src: "/redMarker.png", size: {width: 40, height: 40}}} /> )}
+      {markers.map(item => <><MapMarker key={item.hospitalId} position={{lat: item.latitude, lng: item.longitude }} title={item.institutionName} 
+                                      image={{src: "/redMarker.png", size: {width: 40, height: 40}}}
+                                      onClick={() => handleOverlay(item)} />
+      {selectedMarker?.hospitalId === item.hospitalId &&
+        <CustomOverlayMap position={{lat: item.latitude, lng: item.longitude}} yAnchor={1.2}>
+          <OverlayCard data={item}/>
+        </CustomOverlayMap>}</>)}
     </Map>
   )
 }
