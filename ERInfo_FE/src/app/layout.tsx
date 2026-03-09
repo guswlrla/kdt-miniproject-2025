@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "응급실 위치 정보 서비스",
+  title: "병원 위치 정보 서비스",
   description: "Emergency Room Information Service",
 };
 

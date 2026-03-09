@@ -1,5 +1,7 @@
 'use client';
 
+import Link from "next/link";
+
 export default function Header() {
 
     {/* <header className="fixed top-0 z-50 h-14 w-full bg-white xl:ml-55 md:ml-15 border-b border-gray-200">
@@ -37,11 +39,11 @@ export default function Header() {
             </div>
           </header> */}
   return (
-    <header className='h-14 w-full bg-white border-b border-gray-200'>
-      <div className='px-2 py-2.5'>
-        <div className="flex items-center justify-start p-2 font-medium">
-          <span>🏥 병원 정보 서비스</span>
-        </div>
+    <header className='fixed top-0 left-0 z-50 h-14 w-full bg-white border-b border-gray-200'>
+      <div className="h-14 ml-3 p-1">
+        <Link href='./medicalInfo' >
+          <img src='../headerIcon.png' className="h-full" />
+        </Link>
       </div>
     </header>
   );

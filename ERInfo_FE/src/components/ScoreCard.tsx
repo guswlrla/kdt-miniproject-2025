@@ -35,7 +35,7 @@ export default function ScoreCard({title, content, onOpen, color, imgSrc}: Score
           <img src={iconList[imgSrc]} className="w-6 h-6" />
         </div>
         <div className="flex flex-col">
-          <h2 className="text-gray-600">{title}</h2>
+          <h2 className="text-gray-600 whitespace-nowrap">{title}</h2>
           <p className="font-bold flex justify-end text-xl mt-2">{content.toLocaleString()}개</p>
         </div>
       </div>
